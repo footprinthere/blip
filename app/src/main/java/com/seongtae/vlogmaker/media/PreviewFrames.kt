@@ -46,7 +46,7 @@ class PreviewFrames(private val context: Context) {
             withRetriever(media) { mmr ->
                 (0 until count).mapNotNull { i ->
                     val t = (media.durationMs * (i + 0.5) / count).toLong()
-                    scaledFrame(mmr, media, t, 200, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    scaledFrame(mmr, media, t, 200, MediaMetadataRetriever.OPTION_CLOSEST)
                 }
             }
         }.getOrDefault(emptyList())

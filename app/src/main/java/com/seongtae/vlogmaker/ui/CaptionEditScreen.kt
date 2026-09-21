@@ -1,5 +1,6 @@
 package com.seongtae.vlogmaker.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -116,7 +117,13 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
             IconButton(onClick = { applyDialog = true }, enabled = others.isNotEmpty()) {
                 Icon(Icons.Outlined.FormatPaint, contentDescription = "이 자막의 설정을 다른 자막에 적용")
             }
-            IconButton(onClick = { vm.duplicateCaption(id)?.let { vm.screen = Screen.CaptionEdit(it) } }) {
+            IconButton(onClick = {
+                vm.duplicateCaption(id)?.let { newId ->
+                    val scene = vm.project.captions.find { it.id == newId }?.startScene ?: 0
+                    Toast.makeText(context, "장면 ${scene + 1}에 같은 설정의 빈 자막을 만들었습니다", Toast.LENGTH_SHORT).show()
+                    vm.screen = Screen.CaptionEdit(newId)
+                }
+            }) {
                 Icon(Icons.Outlined.ContentCopy, contentDescription = "같은 자리에 다음 장면 자막 만들기")
             }
             IconButton(onClick = { vm.deleteCaption(id); vm.screen = Screen.Editor }) {
@@ -243,6 +250,7 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
             onDismiss = { applyDialog = false },
             onApply = { position, size, color, font ->
                 vm.applyCaptionStyleToAll(id, position, size, color, font)
+                Toast.makeText(context, "다른 자막 ${others.size}개에 적용했습니다", Toast.LENGTH_SHORT).show()
                 applyDialog = false
             },
         )

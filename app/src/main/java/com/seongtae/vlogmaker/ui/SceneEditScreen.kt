@@ -173,7 +173,7 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
         }
         Text(
             "빈 칸을 누르면 미디어를 넣습니다. 채운 칸은 눌러서 편집하거나, 끌고 두 손가락으로 벌려 위치와 크기를 조정합니다",
-            Modifier.fillMaxWidth(), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
+            Modifier.fillMaxWidth().padding(horizontal = 24.dp), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
         )
 
         LazyRow(

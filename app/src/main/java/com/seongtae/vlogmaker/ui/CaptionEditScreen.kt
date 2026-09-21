@@ -152,7 +152,7 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
         }
         Text(
             "끌어서 위치를 옮깁니다. 화면 중앙이나 다른 자막 위치에 가까워지면 붙습니다",
-            Modifier.fillMaxWidth(), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
+            Modifier.fillMaxWidth().padding(horizontal = 24.dp), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
         )
 
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {

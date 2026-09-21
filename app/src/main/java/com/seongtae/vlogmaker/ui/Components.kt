@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
@@ -75,7 +76,7 @@ fun ScenePreview(
             loaded++
         }
     }
-    Canvas(modifier.aspectRatio(project.aspectRatio).background(Gray1)) {
+    Canvas(modifier.aspectRatio(project.aspectRatio).clipToBounds().background(Gray1)) {
         @Suppress("UNUSED_EXPRESSION") loaded
         if (scene == null) return@Canvas
         val w = size.width.toInt()

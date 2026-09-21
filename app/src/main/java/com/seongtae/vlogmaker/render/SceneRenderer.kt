@@ -24,6 +24,7 @@ fun interface FrameSource {
 /** 미리보기와 내보내기가 함께 쓰는 장면 그리기 코드. 좌표는 모두 0~1 비율이라 어느 크기 캔버스에도 그릴 수 있다. */
 object SceneRenderer {
     private val bitmapPaint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+    private val backgroundPaint = Paint().apply { color = Color.BLACK }
     private val placeholderFill = Paint().apply { color = 0xFF111111.toInt() }
     private val placeholderLine = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF444444.toInt(); style = Paint.Style.STROKE }
 
@@ -36,7 +37,8 @@ object SceneRenderer {
     }
 
     fun drawMedia(canvas: Canvas, w: Int, h: Int, scene: Scene, frames: FrameSource, sceneTimeMs: Long, placeholders: Boolean) {
-        canvas.drawColor(Color.BLACK)
+        // drawColor 는 클립 영역 전체를 칠하므로, 화면 위에 그릴 때 다른 요소를 덮지 않도록 장면 영역만 채운다.
+        canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), backgroundPaint)
         scene.template.cells.forEachIndexed { i, cell ->
             val dst = RectF(cell.left * w, cell.top * h, cell.right * w, cell.bottom * h)
             val slot = scene.slots.getOrNull(i)

@@ -147,6 +147,20 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         return copy.id
     }
 
+    /** 기준 자막의 선택한 속성을 나머지 모든 자막에 복사한다. */
+    fun applyCaptionStyleToAll(id: String, position: Boolean, size: Boolean, color: Boolean, font: Boolean) {
+        val source = project.captions.find { it.id == id } ?: return
+        project = project.copy(captions = project.captions.map { c ->
+            if (c.id == id) c else c.copy(
+                x = if (position) source.x else c.x,
+                y = if (position) source.y else c.y,
+                size = if (size) source.size else c.size,
+                color = if (color) source.color else c.color,
+                fontId = if (font) source.fontId else c.fontId,
+            )
+        })
+    }
+
     fun updateCaption(id: String, transform: (Caption) -> Caption) {
         project = project.copy(captions = project.captions.map { if (it.id == id) transform(it) else it })
     }

@@ -29,9 +29,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FormatPaint
 import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -63,6 +68,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.seongtae.vlogmaker.fonts.FontCatalog
 import com.seongtae.vlogmaker.fonts.FontDef
 import com.seongtae.vlogmaker.fonts.Fonts
@@ -76,6 +82,7 @@ import com.seongtae.vlogmaker.ui.theme.Gray5
 import com.seongtae.vlogmaker.ui.theme.White
 
 private const val SNAP_THRESHOLD = 0.02f
+private const val SIZE_SNAP_THRESHOLD = 0.004f
 
 private val CAPTION_COLORS = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFF9E9E9E, 0xFFFF5252, 0xFFFF9800, 0xFFFFEB3B,
@@ -101,9 +108,14 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
     var guideY by remember { mutableStateOf<Float?>(null) }
     val others = project.captions.filter { it.id != id }
     val ghosts = others.filter { startScene !in it.startScene..it.endScene }
+    var applyDialog by remember { mutableStateOf(false) }
+    var sizeSnapped by remember { mutableStateOf<Float?>(null) }
 
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         TopBar(title = "자막", onBack = { vm.screen = Screen.Editor }) {
+            IconButton(onClick = { applyDialog = true }, enabled = others.isNotEmpty()) {
+                Icon(Icons.Outlined.FormatPaint, contentDescription = "이 자막의 설정을 다른 자막에 적용")
+            }
             IconButton(onClick = { vm.duplicateCaption(id)?.let { vm.screen = Screen.CaptionEdit(it) } }) {
                 Icon(Icons.Outlined.ContentCopy, contentDescription = "같은 자리에 다음 장면 자막 만들기")
             }
@@ -211,7 +223,13 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
                 Text("크기", color = Gray5, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(48.dp))
                 Slider(
                     value = caption.size,
-                    onValueChange = { s -> update { it.copy(size = s) } },
+                    onValueChange = { s ->
+                        val target = Snapping.nearest(s, others.map { it.size }.distinct(), SIZE_SNAP_THRESHOLD)
+                        if (target != null && target != sizeSnapped) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        sizeSnapped = target
+                        update { it.copy(size = target ?: s) }
+                    },
+                    onValueChangeFinished = { sizeSnapped = null },
                     valueRange = 0.02f..0.12f,
                     colors = SliderDefaults.colors(thumbColor = White, activeTrackColor = White, inactiveTrackColor = Gray2),
                 )
@@ -221,6 +239,61 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
             FontPicker(caption.fontId, onSelect = { f -> update { it.copy(fontId = f) } })
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    if (applyDialog) {
+        ApplyToAllDialog(
+            count = others.size,
+            onDismiss = { applyDialog = false },
+            onApply = { position, size, color, font ->
+                vm.applyCaptionStyleToAll(id, position, size, color, font)
+                applyDialog = false
+            },
+        )
+    }
+}
+
+/** 현재 자막의 어떤 설정을 다른 자막들에 맞출지 고르는 창. */
+@Composable
+private fun ApplyToAllDialog(count: Int, onDismiss: () -> Unit, onApply: (Boolean, Boolean, Boolean, Boolean) -> Unit) {
+    var position by remember { mutableStateOf(true) }
+    var size by remember { mutableStateOf(true) }
+    var color by remember { mutableStateOf(false) }
+    var font by remember { mutableStateOf(false) }
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(color = Gray1, shape = MaterialTheme.shapes.medium) {
+            Column(Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+                Text(
+                    "다른 자막 ${count}개에 맞출 항목",
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                CheckRow("위치", position) { position = it }
+                CheckRow("크기", size) { size = it }
+                CheckRow("색상", color) { color = it }
+                CheckRow("글꼴", font) { font = it }
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("취소", color = Gray5) }
+                    TextButton(onClick = { onApply(position, size, color, font) }, enabled = position || size || color || font) {
+                        Text("적용", color = White)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CheckRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked, onCheckedChange = onChange,
+            colors = CheckboxDefaults.colors(checkedColor = White, checkmarkColor = Gray1, uncheckedColor = Gray5),
+        )
+        Text(label, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

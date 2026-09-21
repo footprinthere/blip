@@ -1,15 +1,12 @@
 package com.seongtae.vlogmaker.ui
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,11 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,8 +34,6 @@ import com.seongtae.vlogmaker.media.PreviewFrames
 import com.seongtae.vlogmaker.model.Project
 import com.seongtae.vlogmaker.render.SceneRenderer
 import com.seongtae.vlogmaker.ui.theme.Gray1
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 fun TopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable RowScope.() -> Unit = {}) {
@@ -55,7 +52,7 @@ fun TopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
     }
 }
 
-/** 장면 하나를 비율 그대로 그린 정지 미리보기. 크기에 맞춰 부모 안에 들어간다. */
+/** 장면 하나를 비율 그대로 그린 정지 미리보기. 캐시된 프레임을 바로 그려서 편집 조작에 즉시 반응한다. */
 @Composable
 fun ScenePreview(
     project: Project,
@@ -63,29 +60,29 @@ fun ScenePreview(
     previews: PreviewFrames,
     modifier: Modifier = Modifier,
     showCaptions: Boolean = true,
-    renderWidth: Int = 540,
 ) {
     val scene = project.scenes.getOrNull(sceneIndex)
     val captions = if (showCaptions && scene != null) project.captionsAt(sceneIndex) else emptyList()
     val context = LocalContext.current
     val fontIds = captions.map { it.fontId }.distinct()
     LaunchedEffect(fontIds) { fontIds.forEach { Fonts.load(context, it) } }
-    val fontKey = fontIds.map { Fonts.typefaces[it] }
-    val renderHeight = (renderWidth / project.aspectRatio).toInt()
 
-    val bitmap by produceState<ImageBitmap?>(null, scene, captions, fontKey, renderWidth) {
-        if (scene == null) {
-            value = null
-            return@produceState
-        }
-        previews.preload(scene)
-        value = withContext(Dispatchers.Default) {
-            val bmp = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
-            SceneRenderer.drawScene(Canvas(bmp), renderWidth, renderHeight, scene, captions, previews.source, 0L, Fonts::get, placeholders = true)
-            bmp.asImageBitmap()
+    var loaded by remember { mutableIntStateOf(0) }
+    val mediaKey = scene?.slots?.map { it.media?.uri to it.trimStartMs }
+    LaunchedEffect(mediaKey) {
+        if (scene != null) {
+            previews.preload(scene)
+            loaded++
         }
     }
-    Box(modifier.aspectRatio(project.aspectRatio).background(Gray1)) {
-        bitmap?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize()) }
+    Canvas(modifier.aspectRatio(project.aspectRatio).background(Gray1)) {
+        @Suppress("UNUSED_EXPRESSION") loaded
+        if (scene == null) return@Canvas
+        val w = size.width.toInt()
+        val h = size.height.toInt()
+        if (w <= 0 || h <= 0) return@Canvas
+        drawIntoCanvas { c ->
+            SceneRenderer.drawScene(c.nativeCanvas, w, h, scene, captions, previews.source, 0L, Fonts::get, placeholders = true)
+        }
     }
 }

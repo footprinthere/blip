@@ -140,7 +140,6 @@ private fun SceneStrip(vm: EditorViewModel, selected: Int, onAdd: () -> Unit) {
                             .longPressDraggableHandle()
                             .clickable { vm.selectedScene = i },
                         showCaptions = false,
-                        renderWidth = 216,
                     )
                     Text(formatSec(project.sceneDurationMs(scene)), color = Gray5, style = MaterialTheme.typography.labelSmall)
                 }

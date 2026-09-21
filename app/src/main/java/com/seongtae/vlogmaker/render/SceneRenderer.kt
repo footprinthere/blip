@@ -3,6 +3,7 @@ package com.seongtae.vlogmaker.render
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
@@ -40,19 +41,35 @@ object SceneRenderer {
             val dst = RectF(cell.left * w, cell.top * h, cell.right * w, cell.bottom * h)
             val slot = scene.slots.getOrNull(i)
             val bmp = slot?.let { frames.frame(i, it, sceneTimeMs) }
-            if (bmp != null && !bmp.isRecycled) drawCenterCrop(canvas, bmp, dst)
+            if (bmp != null && !bmp.isRecycled) drawCover(canvas, bmp, dst, slot)
             else if (placeholders) drawPlaceholder(canvas, dst)
         }
     }
 
-    private fun drawCenterCrop(canvas: Canvas, bmp: Bitmap, dst: RectF) {
-        val scale = max(dst.width() / bmp.width, dst.height() / bmp.height)
-        val sw = dst.width() / scale
-        val sh = dst.height() / scale
-        val sx = (bmp.width - sw) / 2f
-        val sy = (bmp.height - sh) / 2f
-        val src = Rect(sx.toInt(), sy.toInt(), (sx + sw).toInt(), (sy + sh).toInt())
-        canvas.drawBitmap(bmp, src, dst, bitmapPaint)
+    /** 칸을 덮는 최소 배율에 zoom 을 곱한 크기로 그리고, 이미지 중심을 offset 만큼 옮긴다. 칸 밖은 잘라낸다. */
+    private fun drawCover(canvas: Canvas, bmp: Bitmap, dst: RectF, slot: Slot) {
+        val scale = coverScale(bmp.width, bmp.height, dst.width(), dst.height(), slot.zoom)
+        val sw = bmp.width * scale
+        val sh = bmp.height * scale
+        val left = dst.centerX() + slot.offsetX * dst.width() - sw / 2f
+        val top = dst.centerY() + slot.offsetY * dst.height() - sh / 2f
+        val m = Matrix().apply {
+            setScale(scale, scale)
+            postTranslate(left, top)
+        }
+        canvas.save()
+        canvas.clipRect(dst)
+        canvas.drawBitmap(bmp, m, bitmapPaint)
+        canvas.restore()
+    }
+
+    fun coverScale(bmpW: Int, bmpH: Int, cellW: Float, cellH: Float, zoom: Float): Float =
+        max(cellW / bmpW, cellH / bmpH) * zoom
+
+    /** 이미지가 칸을 계속 덮는 조건에서 중심을 옮길 수 있는 최대 거리(픽셀, 축별). */
+    fun maxOffsetPx(bmpW: Int, bmpH: Int, cellW: Float, cellH: Float, zoom: Float): Pair<Float, Float> {
+        val scale = coverScale(bmpW, bmpH, cellW, cellH, zoom)
+        return ((bmpW * scale - cellW) / 2f).coerceAtLeast(0f) to ((bmpH * scale - cellH) / 2f).coerceAtLeast(0f)
     }
 
     private fun drawPlaceholder(canvas: Canvas, dst: RectF) {

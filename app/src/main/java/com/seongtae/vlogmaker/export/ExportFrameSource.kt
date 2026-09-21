@@ -23,8 +23,8 @@ class ExportFrameSource(context: Context, scene: Scene, outW: Int, outH: Int) : 
     private val slots: List<SlotFrames?> = scene.template.cells.mapIndexed { i, cell ->
         val slot = scene.slots.getOrNull(i)
         val media = slot?.media ?: return@mapIndexed null
-        val cellW = (cell.width() * outW).roundToInt().coerceAtLeast(1)
-        val cellH = (cell.height() * outH).roundToInt().coerceAtLeast(1)
+        val cellW = (cell.width() * outW * slot.zoom).roundToInt().coerceAtLeast(1)
+        val cellH = (cell.height() * outH * slot.zoom).roundToInt().coerceAtLeast(1)
         runCatching {
             when (media.type) {
                 MediaType.PHOTO -> PhotoFrames(MediaLoader.decodePhotoCover(context, media.uri, cellW, cellH))

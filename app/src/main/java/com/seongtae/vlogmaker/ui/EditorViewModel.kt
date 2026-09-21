@@ -123,15 +123,28 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) Slot() else slot })
     }
 
-    fun setTrim(sceneIndex: Int, slotIndex: Int, trimStartMs: Long) = updateScene(sceneIndex) { s ->
-        s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) slot.copy(trimStartMs = trimStartMs) else slot })
+    fun updateSlot(sceneIndex: Int, slotIndex: Int, transform: (Slot) -> Slot) = updateScene(sceneIndex) { s ->
+        s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) transform(slot) else slot })
     }
+
+    fun setTrim(sceneIndex: Int, slotIndex: Int, trimStartMs: Long) =
+        updateSlot(sceneIndex, slotIndex) { it.copy(trimStartMs = trimStartMs) }
 
     fun addCaption(): String {
         val at = selectedScene.coerceIn(0, (project.scenes.size - 1).coerceAtLeast(0))
         val caption = Caption(startScene = at, endScene = at)
         project = project.copy(captions = project.captions + caption)
         return caption.id
+    }
+
+    /** 위치·색·글꼴·크기는 그대로 두고 내용만 비운 자막을 다음 장면에 만든다. 여러 장면에 같은 자리로 자막을 넣을 때 쓴다. */
+    fun duplicateCaption(id: String): String? {
+        val source = project.captions.find { it.id == id } ?: return null
+        val last = project.scenes.lastIndex
+        val next = (source.endScene + 1).coerceAtMost(last)
+        val copy = source.copy(id = java.util.UUID.randomUUID().toString(), text = "", startScene = next, endScene = next)
+        project = project.copy(captions = project.captions + copy)
+        return copy.id
     }
 
     fun updateCaption(id: String, transform: (Caption) -> Caption) {

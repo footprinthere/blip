@@ -18,7 +18,16 @@ data class MediaItem(
     val frameCount: Int = 0,
 )
 
-data class Slot(val media: MediaItem? = null, val trimStartMs: Long = 0L)
+/**
+ * zoom 은 칸을 꽉 채우는 크기를 1 로 본 배율. offsetX/offsetY 는 칸 크기에 대한 비율로 표현한 이미지 중심의 이동량.
+ */
+data class Slot(
+    val media: MediaItem? = null,
+    val trimStartMs: Long = 0L,
+    val zoom: Float = 1f,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+)
 
 private fun grid(cols: Int, rows: Int): List<RectF> = buildList {
     for (r in 0 until rows) for (c in 0 until cols) {

@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material3.Icon
@@ -49,11 +50,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.Typeface
@@ -70,6 +74,8 @@ import com.seongtae.vlogmaker.ui.theme.Gray2
 import com.seongtae.vlogmaker.ui.theme.Gray3
 import com.seongtae.vlogmaker.ui.theme.Gray5
 import com.seongtae.vlogmaker.ui.theme.White
+
+private const val SNAP_THRESHOLD = 0.02f
 
 private val CAPTION_COLORS = listOf(
     0xFFFFFFFF, 0xFF000000, 0xFF9E9E9E, 0xFFFF5252, 0xFFFF9800, 0xFFFFEB3B,
@@ -89,9 +95,18 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
     val context = LocalContext.current
     LaunchedEffect(caption.fontId) { Fonts.load(context, caption.fontId) }
     val update: ((Caption) -> Caption) -> Unit = { f -> vm.updateCaption(id, f) }
+    val haptic = LocalHapticFeedback.current
+    // 끌기 중 스냅으로 붙은 축의 위치. 가이드 선 표시와 진동 판단에 쓴다.
+    var guideX by remember { mutableStateOf<Float?>(null) }
+    var guideY by remember { mutableStateOf<Float?>(null) }
+    val others = project.captions.filter { it.id != id }
+    val ghosts = others.filter { startScene !in it.startScene..it.endScene }
 
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         TopBar(title = "자막", onBack = { vm.screen = Screen.Editor }) {
+            IconButton(onClick = { vm.duplicateCaption(id)?.let { vm.screen = Screen.CaptionEdit(it) } }) {
+                Icon(Icons.Outlined.ContentCopy, contentDescription = "같은 자리에 다음 장면 자막 만들기")
+            }
             IconButton(onClick = { vm.deleteCaption(id); vm.screen = Screen.Editor }) {
                 Icon(Icons.Outlined.Delete, contentDescription = "자막 삭제")
             }
@@ -102,23 +117,41 @@ fun CaptionEditScreen(vm: EditorViewModel, id: String) {
                 ScenePreview(project, startScene, vm.previews, Modifier.fillMaxSize(), showCaptions = false)
                 CaptionOverlay(
                     captions = project.captionsAt(startScene),
+                    ghosts = ghosts,
                     editingId = id,
+                    guideX = guideX,
+                    guideY = guideY,
                     modifier = Modifier.fillMaxSize().pointerInput(id) {
-                        detectDragGestures { change, drag ->
+                        var raw = Offset.Zero
+                        detectDragGestures(
+                            onDragStart = {
+                                val c = vm.project.captions.find { it.id == id }
+                                raw = Offset(c?.x ?: 0.5f, c?.y ?: 0.5f)
+                            },
+                            onDragEnd = { guideX = null; guideY = null },
+                            onDragCancel = { guideX = null; guideY = null },
+                        ) { change, drag ->
                             change.consume()
-                            update { c ->
-                                c.copy(
-                                    x = (c.x + drag.x / size.width).coerceIn(0.05f, 0.95f),
-                                    y = (c.y + drag.y / size.height).coerceIn(0.05f, 0.95f),
-                                )
+                            raw = Offset(
+                                (raw.x + drag.x / size.width).coerceIn(0.05f, 0.95f),
+                                (raw.y + drag.y / size.height).coerceIn(0.05f, 0.95f),
+                            )
+                            val targets = vm.project.captions.filter { it.id != id }
+                            val tx = Snapping.nearest(raw.x, listOf(0.5f) + targets.map { it.x }, SNAP_THRESHOLD)
+                            val ty = Snapping.nearest(raw.y, listOf(0.5f) + targets.map { it.y }, SNAP_THRESHOLD)
+                            if ((tx != null && tx != guideX) || (ty != null && ty != guideY)) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
+                            guideX = tx
+                            guideY = ty
+                            update { it.copy(x = tx ?: raw.x, y = ty ?: raw.y) }
                         }
                     },
                 )
             }
         }
         Text(
-            "미리보기 위에서 끌어 자막 위치를 옮길 수 있습니다",
+            "끌어서 위치를 옮깁니다. 화면 중앙이나 다른 자막 위치에 가까워지면 붙습니다",
             Modifier.fillMaxWidth(), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
         )
 
@@ -200,22 +233,37 @@ private fun Stepper(value: Int, onDec: () -> Unit, onInc: () -> Unit, decEnabled
     }
 }
 
-/** 미리보기 위에 자막을 실제 렌더러로 그리고, 편집 중인 자막에는 얇은 테두리를 친다. */
+/**
+ * 미리보기 위에 자막을 실제 렌더러로 그린다. 편집 중인 자막에는 테두리를, 다른 장면에만 있는 자막은
+ * 점선 상자로 자리만 보여 주고, 스냅으로 붙은 축에는 가이드 선을 그린다.
+ */
 @Composable
-private fun CaptionOverlay(captions: List<Caption>, editingId: String, modifier: Modifier) {
+private fun CaptionOverlay(
+    captions: List<Caption>,
+    ghosts: List<Caption>,
+    editingId: String,
+    guideX: Float?,
+    guideY: Float?,
+    modifier: Modifier,
+) {
     Canvas(modifier) {
         val w = size.width.toInt()
         val h = size.height.toInt()
         if (w <= 0 || h <= 0) return@Canvas
         drawIntoCanvas { c -> SceneRenderer.drawCaptions(c.nativeCanvas, w, h, captions, Fonts::get) }
+        val thin = Stroke(width = 1.dp.toPx())
+        val dashed = Stroke(width = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())))
+        val pad = 6.dp.toPx()
+        ghosts.forEach { g ->
+            val b = SceneRenderer.captionBounds(w, h, g, Fonts.get(g.fontId))
+            drawRect(Gray5, Offset(b.left - pad, b.top - pad), Size(b.width() + pad * 2, b.height() + pad * 2), style = dashed)
+        }
         captions.find { it.id == editingId }?.let { editing ->
             val b = SceneRenderer.captionBounds(w, h, editing, Fonts.get(editing.fontId))
-            val pad = 6.dp.toPx()
-            drawRect(
-                Gray5, Offset(b.left - pad, b.top - pad), Size(b.width() + pad * 2, b.height() + pad * 2),
-                style = Stroke(width = 1.dp.toPx()),
-            )
+            drawRect(Gray5, Offset(b.left - pad, b.top - pad), Size(b.width() + pad * 2, b.height() + pad * 2), style = thin)
         }
+        guideX?.let { drawLine(White, Offset(it * w, 0f), Offset(it * w, h.toFloat()), strokeWidth = 1.dp.toPx()) }
+        guideY?.let { drawLine(White, Offset(0f, it * h), Offset(w.toFloat(), it * h), strokeWidth = 1.dp.toPx()) }
     }
 }
 

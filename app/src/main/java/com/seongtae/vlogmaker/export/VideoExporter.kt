@@ -20,7 +20,7 @@ import java.util.Locale
 
 class VideoExporter(private val context: Context) {
 
-    /** 프로젝트를 mp4 로 만들어 갤러리(Movies/Tempo)에 저장하고 그 Uri 를 돌려준다. */
+    /** 프로젝트를 mp4 로 만들어 갤러리(Movies/Blip)에 저장하고 그 Uri 를 돌려준다. */
     suspend fun export(project: Project, onProgress: (Float) -> Unit): Uri = withContext(Dispatchers.Default) {
         require(project.scenes.isNotEmpty()) { "장면이 없습니다" }
         for (id in project.captions.map { it.fontId }.distinct()) Fonts.load(context, id)
@@ -66,11 +66,11 @@ class VideoExporter(private val context: Context) {
         (project.sceneDurationMs(scene) * project.fps / 1000L).toInt().coerceAtLeast(1)
 
     private fun saveToGallery(file: File): Uri {
-        val name = "Tempo_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4"
+        val name = "Blip_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4"
         val values = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
             put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/Tempo")
+            put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/Blip")
             put(MediaStore.Video.Media.IS_PENDING, 1)
         }
         val resolver = context.contentResolver

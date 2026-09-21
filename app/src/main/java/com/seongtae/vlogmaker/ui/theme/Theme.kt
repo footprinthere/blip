@@ -16,7 +16,7 @@ val Gray3 = Color(0xFF444444)
 val Gray5 = Color(0xFF888888)
 val Gray7 = Color(0xFFBBBBBB)
 
-private val TempoColors = darkColorScheme(
+private val BlipColors = darkColorScheme(
     primary = White,
     onPrimary = Black,
     secondary = Gray7,
@@ -38,7 +38,7 @@ private val TempoColors = darkColorScheme(
     surfaceContainerLowest = Black,
 )
 
-private val TempoShapes = Shapes(
+private val BlipShapes = Shapes(
     extraSmall = RoundedCornerShape(2.dp),
     small = RoundedCornerShape(4.dp),
     medium = RoundedCornerShape(6.dp),
@@ -47,6 +47,6 @@ private val TempoShapes = Shapes(
 )
 
 @Composable
-fun TempoTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = TempoColors, shapes = TempoShapes, content = content)
+fun BlipTheme(content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = BlipColors, shapes = BlipShapes, content = content)
 }

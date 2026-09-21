@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.seongtae.vlogmaker.ui.theme.Black
 
 @Composable
-fun TempoApp(vm: EditorViewModel = viewModel()) {
+fun BlipApp(vm: EditorViewModel = viewModel()) {
     val screen = vm.screen
     BackHandler(enabled = screen != Screen.Editor) {
         vm.screen = when (screen) {

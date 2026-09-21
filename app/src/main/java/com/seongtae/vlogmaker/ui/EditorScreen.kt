@@ -65,7 +65,7 @@ fun EditorScreen(vm: EditorViewModel) {
     val selected = vm.selectedScene.coerceIn(0, (scenes.size - 1).coerceAtLeast(0))
 
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-        TopBar(title = "Tempo") {
+        TopBar(title = "Blip") {
             Box {
                 TextButton(onClick = { unitMenu = true }) { Text("단위 ${formatSec(project.unitMs)}", color = White) }
                 DropdownMenu(expanded = unitMenu, onDismissRequest = { unitMenu = false }) {

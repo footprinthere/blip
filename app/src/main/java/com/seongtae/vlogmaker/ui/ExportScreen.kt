@@ -50,7 +50,7 @@ fun ExportScreen(vm: EditorViewModel) {
                 is ExportState.Done -> {
                     Text("저장 완료", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(8.dp))
-                    Text("갤러리 › Movies/Tempo", color = Gray5, style = MaterialTheme.typography.bodySmall)
+                    Text("갤러리 › Movies/Blip", color = Gray5, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(32.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = {

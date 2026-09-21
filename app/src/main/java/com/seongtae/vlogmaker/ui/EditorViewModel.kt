@@ -1,0 +1,166 @@
+package com.seongtae.vlogmaker.ui
+
+import android.app.Application
+import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.seongtae.vlogmaker.export.VideoExporter
+import com.seongtae.vlogmaker.media.MediaLoader
+import com.seongtae.vlogmaker.media.PreviewFrames
+import com.seongtae.vlogmaker.model.Caption
+import com.seongtae.vlogmaker.model.LayoutTemplate
+import com.seongtae.vlogmaker.model.MediaItem
+import com.seongtae.vlogmaker.model.MediaType
+import com.seongtae.vlogmaker.model.Project
+import com.seongtae.vlogmaker.model.Scene
+import com.seongtae.vlogmaker.model.Slot
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+
+sealed interface Screen {
+    data object Editor : Screen
+    data class SceneEdit(val index: Int) : Screen
+    data class Trim(val sceneIndex: Int, val slotIndex: Int) : Screen
+    data class CaptionEdit(val id: String) : Screen
+    data object Export : Screen
+}
+
+sealed interface ExportState {
+    data object Idle : ExportState
+    data class Running(val progress: Float) : ExportState
+    data class Done(val uri: Uri) : ExportState
+    data class Failed(val message: String) : ExportState
+}
+
+class EditorViewModel(app: Application) : AndroidViewModel(app) {
+    private val context get() = getApplication<Application>()
+
+    var project by mutableStateOf(Project())
+        private set
+    var screen by mutableStateOf<Screen>(Screen.Editor)
+    var selectedScene by mutableIntStateOf(0)
+    var loading by mutableIntStateOf(0)
+        private set
+    var exportState by mutableStateOf<ExportState>(ExportState.Idle)
+    val previews = PreviewFrames(app)
+    private var exportJob: Job? = null
+
+    fun addMedia(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            loading++
+            try {
+                val items = uris.mapNotNull { MediaLoader.load(context, it) }
+                val wasEmpty = project.scenes.isEmpty()
+                project = project.copy(scenes = project.scenes + items.map { newScene(it) })
+                if (wasEmpty) selectedScene = 0
+            } finally {
+                loading--
+            }
+        }
+    }
+
+    private fun newScene(media: MediaItem): Scene {
+        val units = if (media.type == MediaType.VIDEO) (media.durationMs / project.unitMs).toInt().coerceIn(1, 3) else 2
+        return Scene(slots = listOf(Slot(media)), units = units)
+    }
+
+    fun setUnit(ms: Long) {
+        project = project.copy(unitMs = ms)
+    }
+
+    fun moveScene(from: Int, to: Int) {
+        val list = project.scenes.toMutableList()
+        if (from !in list.indices || to !in list.indices) return
+        list.add(to, list.removeAt(from))
+        project = project.copy(scenes = list)
+        selectedScene = to
+    }
+
+    fun deleteScene(index: Int) {
+        if (index !in project.scenes.indices) return
+        val scenes = project.scenes.filterIndexed { i, _ -> i != index }
+        val captions = project.captions.mapNotNull { c ->
+            if (c.startScene == index && c.endScene == index) return@mapNotNull null
+            val start = if (c.startScene > index) c.startScene - 1 else c.startScene
+            val end = if (c.endScene >= index) c.endScene - 1 else c.endScene
+            c.copy(startScene = start.coerceIn(0, scenes.lastIndex), endScene = end.coerceIn(0, scenes.lastIndex))
+        }
+        project = project.copy(scenes = scenes, captions = if (scenes.isEmpty()) emptyList() else captions)
+        selectedScene = selectedScene.coerceIn(0, (scenes.size - 1).coerceAtLeast(0))
+    }
+
+    private fun updateScene(index: Int, transform: (Scene) -> Scene) {
+        project = project.copy(scenes = project.scenes.mapIndexed { i, s -> if (i == index) transform(s) else s })
+    }
+
+    fun setTemplate(index: Int, template: LayoutTemplate) = updateScene(index) { s ->
+        s.copy(template = template, slots = List(template.slotCount) { k -> s.slots.getOrNull(k) ?: Slot() })
+    }
+
+    fun setUnits(index: Int, units: Int) = updateScene(index) { it.copy(units = units.coerceIn(1, 120)) }
+
+    fun fillSlot(sceneIndex: Int, slotIndex: Int, uri: Uri) {
+        viewModelScope.launch {
+            loading++
+            try {
+                val media = MediaLoader.load(context, uri) ?: return@launch
+                updateScene(sceneIndex) { s ->
+                    s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) Slot(media) else slot })
+                }
+            } finally {
+                loading--
+            }
+        }
+    }
+
+    fun clearSlot(sceneIndex: Int, slotIndex: Int) = updateScene(sceneIndex) { s ->
+        s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) Slot() else slot })
+    }
+
+    fun setTrim(sceneIndex: Int, slotIndex: Int, trimStartMs: Long) = updateScene(sceneIndex) { s ->
+        s.copy(slots = s.slots.mapIndexed { k, slot -> if (k == slotIndex) slot.copy(trimStartMs = trimStartMs) else slot })
+    }
+
+    fun addCaption(): String {
+        val at = selectedScene.coerceIn(0, (project.scenes.size - 1).coerceAtLeast(0))
+        val caption = Caption(startScene = at, endScene = at)
+        project = project.copy(captions = project.captions + caption)
+        return caption.id
+    }
+
+    fun updateCaption(id: String, transform: (Caption) -> Caption) {
+        project = project.copy(captions = project.captions.map { if (it.id == id) transform(it) else it })
+    }
+
+    fun deleteCaption(id: String) {
+        project = project.copy(captions = project.captions.filterNot { it.id == id })
+    }
+
+    fun startExport() {
+        exportJob?.cancel()
+        exportJob = viewModelScope.launch {
+            exportState = ExportState.Running(0f)
+            try {
+                val uri = VideoExporter(context).export(project) { exportState = ExportState.Running(it) }
+                exportState = ExportState.Done(uri)
+            } catch (e: CancellationException) {
+                exportState = ExportState.Idle
+                throw e
+            } catch (e: Throwable) {
+                exportState = ExportState.Failed(e.message ?: e.toString())
+            }
+        }
+    }
+
+    fun cancelExport() {
+        exportJob?.cancel()
+        exportJob = null
+        exportState = ExportState.Idle
+    }
+}

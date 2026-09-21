@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.seongtae.vlogmaker"
-        minSdk = 28
+        minSdk = 29
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"

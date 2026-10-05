@@ -1,6 +1,6 @@
-package com.seongtae.vlogmaker.fonts
+package dev.footprinthere.blip.fonts
 
-import com.seongtae.vlogmaker.model.SYSTEM_FONT
+import dev.footprinthere.blip.model.SYSTEM_FONT
 
 enum class Script(val label: String) { KO("한국어"), JA("日本語"), ZH("中文"), EN("English") }
 

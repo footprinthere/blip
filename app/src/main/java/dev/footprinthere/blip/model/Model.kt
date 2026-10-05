@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.model
+package dev.footprinthere.blip.model
 
 import android.graphics.RectF
 import android.net.Uri

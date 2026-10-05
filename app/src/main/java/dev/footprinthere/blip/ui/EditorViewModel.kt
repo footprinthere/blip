@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import android.app.Application
 import android.net.Uri
@@ -8,16 +8,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.seongtae.vlogmaker.export.VideoExporter
-import com.seongtae.vlogmaker.media.MediaLoader
-import com.seongtae.vlogmaker.media.PreviewFrames
-import com.seongtae.vlogmaker.model.Caption
-import com.seongtae.vlogmaker.model.LayoutTemplate
-import com.seongtae.vlogmaker.model.MediaItem
-import com.seongtae.vlogmaker.model.MediaType
-import com.seongtae.vlogmaker.model.Project
-import com.seongtae.vlogmaker.model.Scene
-import com.seongtae.vlogmaker.model.Slot
+import dev.footprinthere.blip.export.VideoExporter
+import dev.footprinthere.blip.media.MediaLoader
+import dev.footprinthere.blip.media.PreviewFrames
+import dev.footprinthere.blip.model.Caption
+import dev.footprinthere.blip.model.LayoutTemplate
+import dev.footprinthere.blip.model.MediaItem
+import dev.footprinthere.blip.model.MediaType
+import dev.footprinthere.blip.model.Project
+import dev.footprinthere.blip.model.Scene
+import dev.footprinthere.blip.model.Slot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

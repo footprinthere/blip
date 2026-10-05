@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.render
+package dev.footprinthere.blip.render
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -11,9 +11,9 @@ import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
-import com.seongtae.vlogmaker.model.Caption
-import com.seongtae.vlogmaker.model.Scene
-import com.seongtae.vlogmaker.model.Slot
+import dev.footprinthere.blip.model.Caption
+import dev.footprinthere.blip.model.Scene
+import dev.footprinthere.blip.model.Slot
 import kotlin.math.max
 
 /** 슬롯에 그릴 프레임을 돌려준다. 사진이면 이미지, 영상이면 해당 시점 프레임, 빈 슬롯이면 null. */

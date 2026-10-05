@@ -10,3 +10,4 @@
 .cxx
 *.apk
 !release/*.apk
+.claude/worktrees/

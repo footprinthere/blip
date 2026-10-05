@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.fonts
+package dev.footprinthere.blip.fonts
 
 import android.content.Context
 import android.graphics.Typeface
@@ -7,8 +7,8 @@ import android.os.HandlerThread
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.provider.FontRequest
 import androidx.core.provider.FontsContractCompat
-import com.seongtae.vlogmaker.R
-import com.seongtae.vlogmaker.model.SYSTEM_FONT
+import dev.footprinthere.blip.R
+import dev.footprinthere.blip.model.SYSTEM_FONT
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

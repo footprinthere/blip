@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.export
+package dev.footprinthere.blip.export
 
 import android.graphics.Bitmap
 import android.media.MediaCodec

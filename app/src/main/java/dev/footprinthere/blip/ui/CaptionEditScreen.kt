@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -70,17 +70,17 @@ import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.seongtae.vlogmaker.fonts.FontCatalog
-import com.seongtae.vlogmaker.fonts.FontDef
-import com.seongtae.vlogmaker.fonts.Fonts
-import com.seongtae.vlogmaker.fonts.Script
-import com.seongtae.vlogmaker.model.Caption
-import com.seongtae.vlogmaker.render.SceneRenderer
-import com.seongtae.vlogmaker.ui.theme.Gray1
-import com.seongtae.vlogmaker.ui.theme.Gray2
-import com.seongtae.vlogmaker.ui.theme.Gray3
-import com.seongtae.vlogmaker.ui.theme.Gray5
-import com.seongtae.vlogmaker.ui.theme.White
+import dev.footprinthere.blip.fonts.FontCatalog
+import dev.footprinthere.blip.fonts.FontDef
+import dev.footprinthere.blip.fonts.Fonts
+import dev.footprinthere.blip.fonts.Script
+import dev.footprinthere.blip.model.Caption
+import dev.footprinthere.blip.render.SceneRenderer
+import dev.footprinthere.blip.ui.theme.Gray1
+import dev.footprinthere.blip.ui.theme.Gray2
+import dev.footprinthere.blip.ui.theme.Gray3
+import dev.footprinthere.blip.ui.theme.Gray5
+import dev.footprinthere.blip.ui.theme.White
 
 private const val SNAP_THRESHOLD = 0.02f
 private const val SIZE_SNAP_THRESHOLD = 0.004f

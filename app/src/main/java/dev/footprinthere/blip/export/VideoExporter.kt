@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.export
+package dev.footprinthere.blip.export
 
 import android.content.ContentValues
 import android.content.Context
@@ -7,9 +7,9 @@ import android.graphics.Canvas
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import com.seongtae.vlogmaker.fonts.Fonts
-import com.seongtae.vlogmaker.model.Project
-import com.seongtae.vlogmaker.render.SceneRenderer
+import dev.footprinthere.blip.fonts.Fonts
+import dev.footprinthere.blip.model.Project
+import dev.footprinthere.blip.render.SceneRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -62,7 +62,7 @@ class VideoExporter(private val context: Context) {
         }
     }
 
-    private fun framesFor(project: Project, scene: com.seongtae.vlogmaker.model.Scene): Int =
+    private fun framesFor(project: Project, scene: dev.footprinthere.blip.model.Scene): Int =
         (project.sceneDurationMs(scene) * project.fps / 1000L).toInt().coerceAtLeast(1)
 
     private fun saveToGallery(file: File): Uri {

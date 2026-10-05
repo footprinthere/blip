@@ -1,14 +1,14 @@
-package com.seongtae.vlogmaker.media
+package dev.footprinthere.blip.media
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.util.LruCache
-import com.seongtae.vlogmaker.model.MediaItem
-import com.seongtae.vlogmaker.model.MediaType
-import com.seongtae.vlogmaker.model.Scene
-import com.seongtae.vlogmaker.model.Slot
-import com.seongtae.vlogmaker.render.FrameSource
+import dev.footprinthere.blip.model.MediaItem
+import dev.footprinthere.blip.model.MediaType
+import dev.footprinthere.blip.model.Scene
+import dev.footprinthere.blip.model.Slot
+import dev.footprinthere.blip.render.FrameSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.max

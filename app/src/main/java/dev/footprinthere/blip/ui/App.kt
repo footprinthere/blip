@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
@@ -6,7 +6,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.seongtae.vlogmaker.ui.theme.Black
+import dev.footprinthere.blip.ui.theme.Black
 
 @Composable
 fun BlipApp(vm: EditorViewModel = viewModel()) {

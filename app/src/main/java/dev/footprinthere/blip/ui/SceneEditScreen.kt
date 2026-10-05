@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -53,13 +53,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.seongtae.vlogmaker.model.LayoutTemplate
-import com.seongtae.vlogmaker.model.MediaType
-import com.seongtae.vlogmaker.model.formatSec
-import com.seongtae.vlogmaker.render.SceneRenderer
-import com.seongtae.vlogmaker.ui.theme.Gray1
-import com.seongtae.vlogmaker.ui.theme.Gray5
-import com.seongtae.vlogmaker.ui.theme.White
+import dev.footprinthere.blip.model.LayoutTemplate
+import dev.footprinthere.blip.model.MediaType
+import dev.footprinthere.blip.model.formatSec
+import dev.footprinthere.blip.render.SceneRenderer
+import dev.footprinthere.blip.ui.theme.Gray1
+import dev.footprinthere.blip.ui.theme.Gray5
+import dev.footprinthere.blip.ui.theme.White
 
 @Composable
 fun SceneEditScreen(vm: EditorViewModel, index: Int) {
@@ -227,7 +227,7 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
     }
 }
 
-private fun cellAt(scene: com.seongtae.vlogmaker.model.Scene, nx: Float, ny: Float): Int =
+private fun cellAt(scene: dev.footprinthere.blip.model.Scene, nx: Float, ny: Float): Int =
     scene.template.cells.indexOfFirst { it.contains(nx, ny) }
 
 @Composable

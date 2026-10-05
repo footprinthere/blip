@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import kotlin.math.abs
 

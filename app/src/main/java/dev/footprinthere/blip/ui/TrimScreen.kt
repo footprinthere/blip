@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
@@ -48,13 +48,13 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.PlayerSurface
-import com.seongtae.vlogmaker.model.MediaType
-import com.seongtae.vlogmaker.model.formatClock
-import com.seongtae.vlogmaker.model.formatSec
-import com.seongtae.vlogmaker.ui.theme.Black
-import com.seongtae.vlogmaker.ui.theme.Gray1
-import com.seongtae.vlogmaker.ui.theme.Gray5
-import com.seongtae.vlogmaker.ui.theme.White
+import dev.footprinthere.blip.model.MediaType
+import dev.footprinthere.blip.model.formatClock
+import dev.footprinthere.blip.model.formatSec
+import dev.footprinthere.blip.ui.theme.Black
+import dev.footprinthere.blip.ui.theme.Gray1
+import dev.footprinthere.blip.ui.theme.Gray5
+import dev.footprinthere.blip.ui.theme.White
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 

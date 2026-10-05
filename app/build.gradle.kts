@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.seongtae.vlogmaker"
+    namespace = "dev.footprinthere.blip"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.seongtae.vlogmaker"
+        applicationId = "dev.footprinthere.blip"
         minSdk = 29
         targetSdk = 36
         versionCode = 1

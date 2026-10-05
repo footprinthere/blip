@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
@@ -21,9 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.seongtae.vlogmaker.ui.theme.Gray2
-import com.seongtae.vlogmaker.ui.theme.Gray5
-import com.seongtae.vlogmaker.ui.theme.White
+import dev.footprinthere.blip.ui.theme.Gray2
+import dev.footprinthere.blip.ui.theme.Gray5
+import dev.footprinthere.blip.ui.theme.White
 
 @Composable
 fun ExportScreen(vm: EditorViewModel) {

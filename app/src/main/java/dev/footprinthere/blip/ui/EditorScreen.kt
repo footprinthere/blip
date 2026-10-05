@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -47,11 +47,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.seongtae.vlogmaker.model.UNIT_OPTIONS_MS
-import com.seongtae.vlogmaker.model.formatSec
-import com.seongtae.vlogmaker.ui.theme.Gray3
-import com.seongtae.vlogmaker.ui.theme.Gray5
-import com.seongtae.vlogmaker.ui.theme.White
+import dev.footprinthere.blip.model.UNIT_OPTIONS_MS
+import dev.footprinthere.blip.model.formatSec
+import dev.footprinthere.blip.ui.theme.Gray3
+import dev.footprinthere.blip.ui.theme.Gray5
+import dev.footprinthere.blip.ui.theme.White
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 

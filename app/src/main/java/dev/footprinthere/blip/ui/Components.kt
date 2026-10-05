@@ -1,4 +1,4 @@
-package com.seongtae.vlogmaker.ui
+package dev.footprinthere.blip.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -30,11 +30,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.seongtae.vlogmaker.fonts.Fonts
-import com.seongtae.vlogmaker.media.PreviewFrames
-import com.seongtae.vlogmaker.model.Project
-import com.seongtae.vlogmaker.render.SceneRenderer
-import com.seongtae.vlogmaker.ui.theme.Gray1
+import dev.footprinthere.blip.fonts.Fonts
+import dev.footprinthere.blip.media.PreviewFrames
+import dev.footprinthere.blip.model.Project
+import dev.footprinthere.blip.render.SceneRenderer
+import dev.footprinthere.blip.ui.theme.Gray1
 
 @Composable
 fun TopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable RowScope.() -> Unit = {}) {

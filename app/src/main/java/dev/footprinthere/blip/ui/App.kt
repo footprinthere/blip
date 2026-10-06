@@ -13,7 +13,7 @@ fun BlipApp(vm: EditorViewModel = viewModel()) {
     val screen = vm.screen
     BackHandler(enabled = screen != Screen.Editor) {
         vm.screen = when (screen) {
-            is Screen.Trim -> Screen.SceneEdit(screen.sceneIndex)
+            is Screen.Trim -> Screen.SceneEdit(screen.sceneIndex, screen.slotIndex)
             Screen.Export -> { vm.cancelExport(); Screen.Editor }
             else -> Screen.Editor
         }
@@ -21,9 +21,10 @@ fun BlipApp(vm: EditorViewModel = viewModel()) {
     Surface(Modifier.fillMaxSize(), color = Black) {
         when (screen) {
             Screen.Editor -> EditorScreen(vm)
-            is Screen.SceneEdit -> SceneEditScreen(vm, screen.index)
+            is Screen.SceneEdit -> SceneEditScreen(vm, screen.index, screen.slot)
             is Screen.Trim -> TrimScreen(vm, screen.sceneIndex, screen.slotIndex)
             is Screen.CaptionEdit -> CaptionEditScreen(vm, screen.id)
+            Screen.Play -> PlayScreen(vm)
             Screen.Export -> ExportScreen(vm)
         }
     }

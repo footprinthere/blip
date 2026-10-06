@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -77,6 +78,10 @@ fun EditorScreen(vm: EditorViewModel) {
             if (vm.loading > 0) {
                 CircularProgressIndicator(Modifier.padding(12.dp).width(20.dp).height(20.dp), color = White, strokeWidth = 2.dp)
             }
+            IconButton(
+                onClick = { vm.screen = Screen.Play },
+                enabled = scenes.isNotEmpty() && vm.loading == 0,
+            ) { Icon(Icons.Outlined.PlayArrow, contentDescription = "전체 미리보기") }
             IconButton(
                 onClick = { vm.screen = Screen.Export; vm.startExport() },
                 enabled = scenes.isNotEmpty() && vm.loading == 0,

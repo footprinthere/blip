@@ -28,14 +28,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,24 +46,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import dev.footprinthere.blip.model.LayoutTemplate
 import dev.footprinthere.blip.model.MediaType
 import dev.footprinthere.blip.model.formatSec
 import dev.footprinthere.blip.render.SceneRenderer
-import dev.footprinthere.blip.ui.theme.Gray1
+import dev.footprinthere.blip.ui.theme.Gray3
 import dev.footprinthere.blip.ui.theme.Gray5
 import dev.footprinthere.blip.ui.theme.White
 
 @Composable
-fun SceneEditScreen(vm: EditorViewModel, index: Int) {
+fun SceneEditScreen(vm: EditorViewModel, index: Int, initialSlot: Int = -1) {
     val project = vm.project
     val scene = project.scenes.getOrNull(index)
     if (scene == null) {
@@ -70,7 +72,10 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
         return
     }
     var pendingSlot by remember { mutableIntStateOf(-1) }
-    var menuSlot by remember { mutableIntStateOf(-1) }
+    var selectedSlot by remember(scene.id) { mutableIntStateOf(initialSlot.takeIf { it >= 0 } ?: scene.slots.indexOfFirst { it.media != null }.coerceAtLeast(0)) }
+    if (selectedSlot >= scene.template.slotCount) selectedSlot = 0
+    val selected = scene.slots.getOrNull(selectedSlot)
+    val multiSlot = scene.template.slotCount > 1
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null && pendingSlot >= 0) vm.fillSlot(index, pendingSlot, uri)
         pendingSlot = -1
@@ -93,11 +98,25 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
                 project, index, vm.previews,
                 Modifier
                     .fillMaxHeight()
+                    .drawWithContent {
+                        drawContent()
+                        val cell = scene.template.cells.getOrNull(selectedSlot)
+                        if (multiSlot && cell != null) {
+                            val stroke = 2.dp.toPx()
+                            drawRect(
+                                White,
+                                Offset(cell.left * size.width + stroke / 2, cell.top * size.height + stroke / 2),
+                                Size(cell.width() * size.width - stroke, cell.height() * size.height - stroke),
+                                style = Stroke(stroke),
+                            )
+                        }
+                    }
                     .pointerInput(scene.id, scene.template) {
                         detectTapGestures { offset ->
                             val cell = cellAt(scene, offset.x / size.width, offset.y / size.height)
                             if (cell >= 0) {
-                                if (scene.slots.getOrNull(cell)?.media == null) pickInto(cell) else menuSlot = cell
+                                selectedSlot = cell
+                                if (vm.project.scenes.getOrNull(index)?.slots?.getOrNull(cell)?.media == null) pickInto(cell)
                             }
                         }
                     }
@@ -171,8 +190,24 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
                 showCaptions = false,
             )
         }
+        Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.Center) {
+            val hasMedia = selected?.media != null
+            SlotAction(Icons.Outlined.ContentCut, "구간 자르기", enabled = selected?.media?.type == MediaType.VIDEO) {
+                vm.screen = Screen.Trim(index, selectedSlot)
+            }
+            SlotAction(Icons.Outlined.SwapHoriz, if (hasMedia) "교체" else "넣기") { pickInto(selectedSlot) }
+            SlotAction(Icons.Outlined.HideImage, "비우기", enabled = hasMedia) { vm.clearSlot(index, selectedSlot) }
+        }
+        val media = selected?.media
+        val hint = if (media?.type == MediaType.VIDEO && media.durationMs - selected.trimStartMs < project.sceneDurationMs(scene)) {
+            "영상이 장면보다 짧아 끝부분은 마지막 프레임으로 멈춥니다"
+        } else if (multiSlot) {
+            "칸을 눌러 고른 뒤 아래 버튼으로 편집합니다. 끌거나 두 손가락으로 벌려 위치와 크기를 조정합니다"
+        } else {
+            "끌거나 두 손가락으로 벌려 위치와 크기를 조정합니다"
+        }
         Text(
-            "빈 칸을 누르면 미디어를 넣습니다. 채운 칸은 눌러서 편집하거나, 끌고 두 손가락으로 벌려 위치와 크기를 조정합니다",
+            hint,
             Modifier.fillMaxWidth().padding(horizontal = 24.dp), color = Gray5, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall,
         )
 
@@ -203,32 +238,22 @@ fun SceneEditScreen(vm: EditorViewModel, index: Int) {
             }
         }
     }
-
-    if (menuSlot >= 0) {
-        val slot = scene.slots.getOrNull(menuSlot)
-        val isVideo = slot?.media?.type == MediaType.VIDEO
-        Dialog(onDismissRequest = { menuSlot = -1 }) {
-            Surface(color = Gray1, shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(8.dp)) {
-                    if (isVideo) {
-                        TextButton(onClick = { vm.screen = Screen.Trim(index, menuSlot); menuSlot = -1 }, Modifier.fillMaxWidth()) {
-                            Text("구간 자르기", color = White)
-                        }
-                    }
-                    TextButton(onClick = { val s = menuSlot; menuSlot = -1; pickInto(s) }, Modifier.fillMaxWidth()) {
-                        Text("다른 미디어로 교체", color = White)
-                    }
-                    TextButton(onClick = { vm.clearSlot(index, menuSlot); menuSlot = -1 }, Modifier.fillMaxWidth()) {
-                        Text("비우기", color = Gray5)
-                    }
-                }
-            }
-        }
-    }
 }
 
 private fun cellAt(scene: dev.footprinthere.blip.model.Scene, nx: Float, ny: Float): Int =
     scene.template.cells.indexOfFirst { it.contains(nx, ny) }
+
+@Composable
+private fun SlotAction(icon: ImageVector, label: String, enabled: Boolean = true, onClick: () -> Unit) {
+    val color = if (enabled) White else Gray3
+    Column(
+        Modifier.width(88.dp).clickable(enabled = enabled, onClick = onClick).padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(icon, contentDescription = label, tint = color)
+        Text(label, color = color, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 4.dp))
+    }
+}
 
 @Composable
 private fun TemplateIcon(template: LayoutTemplate, selected: Boolean, onClick: () -> Unit) {

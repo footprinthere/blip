@@ -24,9 +24,10 @@ import kotlinx.coroutines.launch
 
 sealed interface Screen {
     data object Editor : Screen
-    data class SceneEdit(val index: Int) : Screen
+    data class SceneEdit(val index: Int, val slot: Int = -1) : Screen
     data class Trim(val sceneIndex: Int, val slotIndex: Int) : Screen
     data class CaptionEdit(val id: String) : Screen
+    data object Play : Screen
     data object Export : Screen
 }
 
@@ -71,7 +72,8 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setUnit(ms: Long) {
-        project = project.copy(unitMs = ms)
+        val updated = project.copy(unitMs = ms)
+        project = updated.copy(scenes = updated.scenes.map { it.fitTrims(updated.sceneDurationMs(it)) })
     }
 
     fun moveScene(from: Int, to: Int) {
@@ -103,7 +105,17 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(template = template, slots = List(template.slotCount) { k -> s.slots.getOrNull(k) ?: Slot() })
     }
 
-    fun setUnits(index: Int, units: Int) = updateScene(index) { it.copy(units = units.coerceIn(1, 120)) }
+    fun setUnits(index: Int, units: Int) = updateScene(index) { s ->
+        val resized = s.copy(units = units.coerceIn(1, 120))
+        resized.fitTrims(project.sceneDurationMs(resized))
+    }
+
+    /** 장면이 길어지면 잘라 둔 시작 지점 뒤로 영상이 모자랄 수 있다. 그러면 남은 시간이 마지막 프레임으로 멈추므로 시작 지점을 앞으로 당긴다. */
+    private fun Scene.fitTrims(durationMs: Long): Scene = copy(slots = slots.map { slot ->
+        val media = slot.media
+        if (media?.type != MediaType.VIDEO) slot
+        else slot.copy(trimStartMs = slot.trimStartMs.coerceIn(0L, (media.durationMs - durationMs).coerceAtLeast(0L)))
+    })
 
     fun fillSlot(sceneIndex: Int, slotIndex: Int, uri: Uri) {
         viewModelScope.launch {

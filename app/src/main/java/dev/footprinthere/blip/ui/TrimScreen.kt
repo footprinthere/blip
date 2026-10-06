@@ -66,7 +66,7 @@ fun TrimScreen(vm: EditorViewModel, sceneIndex: Int, slotIndex: Int) {
     val slot = scene?.slots?.getOrNull(slotIndex)
     val media = slot?.media
     if (scene == null || media == null || media.type != MediaType.VIDEO) {
-        LaunchedEffect(Unit) { vm.screen = Screen.SceneEdit(sceneIndex) }
+        LaunchedEffect(Unit) { vm.screen = Screen.SceneEdit(sceneIndex, slotIndex) }
         return
     }
     val context = LocalContext.current
@@ -98,8 +98,8 @@ fun TrimScreen(vm: EditorViewModel, sceneIndex: Int, slotIndex: Int) {
     LaunchedEffect(media.uri) { strip = vm.previews.filmstrip(media, 10) }
 
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-        TopBar(title = "구간 선택", onBack = { vm.screen = Screen.SceneEdit(sceneIndex) }) {
-            IconButton(onClick = { vm.setTrim(sceneIndex, slotIndex, start); vm.screen = Screen.SceneEdit(sceneIndex) }) {
+        TopBar(title = "구간 선택", onBack = { vm.screen = Screen.SceneEdit(sceneIndex, slotIndex) }) {
+            IconButton(onClick = { vm.setTrim(sceneIndex, slotIndex, start); vm.screen = Screen.SceneEdit(sceneIndex, slotIndex) }) {
                 Icon(Icons.Outlined.Check, contentDescription = "확인")
             }
         }
